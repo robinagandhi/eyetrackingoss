@@ -1,0 +1,19 @@
+---
+title: "OSS License Comprehension Study"
+output: html_notebook
+---
+
+# Load data and visualize the clusters
+
+```{r}
+userdata <- read.table("OSSStudy4.csv", header=T) # OSSstudy4.txt has mean mouse duration
+df <- scale(userdata)
+#png("subject-clusters-splitmouse.png")
+h <- heatmap(df[,c(2:20,39:54)], scale="column")
+```
+
+# Visualize just the dendogram
+
+```{r}
+plot(hclust(dist(t(df[,c(2:20,39:54)]))), xlab="Variables")
+```
