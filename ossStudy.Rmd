@@ -3,25 +3,119 @@ title: "OSS License Comprehension Study"
 output: html_notebook
 ---
 
-# Load data and visualize the clusters
+# Read data
 
 ```{r}
-userdata <- read.table("OSSStudy4.csv", header=T) # OSSstudy4.txt has mean mouse duration
-df <- scale(userdata)
-#png("subject-clusters-splitmouse.png")
-h <- heatmap(df[,c(2:20,39:54)], scale="column")
+library(dplyr)
+userdata <- read.csv("OSSStudy5.csv", header=T)
 ```
 
-# Visualize just the dendogram
+# Eye Fixation data Clustering (MEL + LEL)
 
-```{r}
-plot(hclust(dist(t(df[,c(2:20,39:54)]))), xlab="Variables")
+* g1: 1,3,4,5,9
+* g2: 2,6,7,8,10
+* cuttree: 1 2 1 1 1 2 2 2 1 2
+
+```{r,}
+df <- scale(select(userdata, matches('melfix|lelfix|switches')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+g1 <- groups[groups[,2] == 1,1]
+g1
+g2 <- groups[groups[,2] == 2,1]
+g2
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# Eye Fixation data Clustering (MEL only)
+
+* g1: 1,3,4,5,9
+* g2: 2,6,7,8,10
+* cuttree: 1 2 1 1 1 2 2 2 1 2
+* Same groups as comined MEL and LEL. Only ordering different.
+
+```{r,}
+df <- scale(select(userdata, matches('melfix|melswitches')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+g1 <- groups[groups[,2] == 1,1]
+g1
+g2 <- groups[groups[,2] == 2,1]
+g2
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# Eye Fixation data Clustering (LEL only)
+
+* g1: 1,2,3,4,5,9,10
+* g2: 6,7,8
+
+```{r,}
+df <- scale(select(userdata, matches('lelfix|lelswitches')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+g1 <- groups[groups[,2] == 1,1]
+g1
+g2 <- groups[groups[,2] == 2,1]
+g2
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# Mouse data Clustering (Mouse Data)
+
+* g1: 
+* g2: 
+* cuttree: 
+
+```{r,}
+df <- scale(select(userdata, matches('mfixdur|mousecnt'), -matches('mel|lel')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+g1 <- groups[groups[,2] == 1,1]
+g1
+g2 <- groups[groups[,2] == 2,1]
+g2
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# Mouse data Clustering (MEL Mouse Data)
+
+* g1: 
+* g2: 
+* cuttree: 
+
+```{r,}
+df <- scale(select(userdata, matches('melmouse')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+g1 <- groups[groups[,2] == 1,1]
+g1
+g2 <- groups[groups[,2] == 2,1]
+g2
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 ```
 
-# Corrplot view
-```{r}
-library('corrplot')
-cors <- cor.mtest(df[,c(2:20,39:54)], conf.level=0.95)
-corrplot(cor(df[,c(2:20,39:54)]), p.mat=cors$p, order="hclust", addrec=6, sig.level=0.05, insig="blank")
-```
+# Mouse data Clustering (KEL Mouse Data)
 
+* g1: 
+* g2: 
+* cuttree: 
+
+```{r,}
+df <- scale(select(userdata, matches('lelmouse')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+g1 <- groups[groups[,2] == 1,1]
+g1
+g2 <- groups[groups[,2] == 2,1]
+g2
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
