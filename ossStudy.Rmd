@@ -129,14 +129,16 @@ h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 # Significant test between groups
 
 ```{r}
-g1
-g2
+userdata <- userdata %>%
+              mutate(learnability = SUS4 + SUS10,
+                     usability = SUS1 + SUS2 + SUS3 + SUS5 + SUS6 + SUS7 + SUS8 + SUS9)
 
 group1 <- userdata %>%
   filter (ID %in% g1)
 
 group2 <- userdata %>%
   filter (ID %in% g2)
+
 
 # Test for eye fixation count difference between two groups
 boxplot(rowSums(select(group1, matches('melfixcnt|lelfixcnt'), -matches('task'))),
@@ -166,6 +168,20 @@ boxplot(group1$SUS, group2$SUS, names = c("Group1", "Group 2"))
 t.test(group1$SUS, group2$SUS)
 wilcox.test(group1$SUS, group2$SUS)
 
+summary(group1$SUS)
+sd(group1$SUS)
+summary(group2$SUS)
+sd(group2$SUS)
+
+# Test for SUS Learnability subscale difference between two groups
+boxplot(group1$learnability, group2$learnability, names = c("Group1", "Group 2"))
+t.test(group1$learnability, group2$learnability)
+wilcox.test(group1$learnability, group2$learnability)
+
+# Test for SUS Usability subscale difference between two groups
+boxplot(group1$usability, group2$usability, names = c("Group1", "Group 2"))
+t.test(group1$usability, group2$usability)
+wilcox.test(group1$usability, group2$usability)
 
 # Test for mouse fixation count difference between two groups
 
@@ -189,14 +205,4 @@ t.test(rowSums(select(group1, matches('mfixdur'), -matches('task'))),
 
 wilcox.test(rowSums(select(group1, matches('mfixdur'), -matches('task'))),
             rowSums(select(group2, matches('mfixdur'), -matches('task'))))
-
-
-
 ```
-
-```{r}
-
-
-
-```
-
