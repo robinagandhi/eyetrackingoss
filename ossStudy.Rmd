@@ -3,14 +3,30 @@ title: "OSS License Comprehension Study"
 output: html_notebook
 ---
 
+# Load libraries
+
+```{r}
+library('corrplot')
+library('tidyverse')
+```
+
+
 # Load data and visualize the clusters
 
 ```{r}
 userdata <- read.table("OSSStudy4.csv", header=T) # OSSstudy4.txt has mean mouse duration
-df <- scale(userdata)
+df <- cbind(userdata[,1], scale(userdata[,2:54]))
+colnames(df)[1] <- "ID" 
 #png("subject-clusters-splitmouse.png")
 h <- heatmap(df[,c(2:20,39:54)], scale="column")
 ```
+# Create groups based on dendogram
+
+```{r}
+grp1 <- c(1,3,9,4,5)
+grp2 <- c(10,2,6,8,7)
+```
+
 
 # Visualize just the dendogram
 
@@ -20,7 +36,6 @@ plot(hclust(dist(t(df[,c(2:20,39:54)]))), xlab="Variables")
 
 # Corrplot view
 ```{r}
-library('corrplot')
 cors <- cor.mtest(df[,c(2:20,39:54)], conf.level=0.95)
 corrplot(cor(df[,c(2:20,39:54)]), p.mat=cors$p, order="hclust", addrec=6, sig.level=0.05, insig="blank")
 ```
