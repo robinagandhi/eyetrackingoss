@@ -145,9 +145,6 @@ h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 
 ```{r}
 
-g1 <- c(3,1,9, 4,10)
-g2 <- c(6,7,8)
-
 userdata <- userdata %>%
               mutate(learnability = SUS4 + SUS10,
                      usability = SUS1 + SUS2 + SUS3 + SUS5 + SUS6 + SUS7 + SUS8 + SUS9)
@@ -225,5 +222,3 @@ t.test(rowSums(select(group1, matches('mfixdur'), -matches('task'))),
 wilcox.test(rowSums(select(group1, matches('mfixdur'), -matches('task'))),
             rowSums(select(group2, matches('mfixdur'), -matches('task'))))
 ```
-
-* 
