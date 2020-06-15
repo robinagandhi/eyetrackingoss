@@ -3,22 +3,12 @@ title: "OSS License Comprehension Study"
 output: html_notebook
 ---
 
-# Load libraries
+# Read data
 
 ```{r}
-library('corrplot')
-library('tidyverse')
-```
-
-
-# Load data and visualize the clusters
-
-```{r}
-userdata <- read.table("OSSStudy4.csv", header=T) # OSSstudy4.txt has mean mouse duration
-df <- cbind(userdata[,1], scale(userdata[,2:54]))
-colnames(df)[1] <- "ID" 
-#png("subject-clusters-splitmouse.png")
-h <- heatmap(df[,c(2:20,39:54)], scale="column")
+library(dplyr)
+userdata <- read.csv("OSSStudy5.csv", header=T)
+userdata
 ```
 # Create groups based on dendogram
 
@@ -28,15 +18,198 @@ grp2 <- c(10,2,6,8,7)
 ```
 
 
-# Visualize just the dendogram
+# Eye Fixation data Clustering (MEL + LEL)
 
-```{r}
-plot(hclust(dist(t(df[,c(2:20,39:54)]))), xlab="Variables")
+```{r,}
+df <- scale(select(userdata, matches('melfix|lelfix|switches'), -matches('task')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =3)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# Eye Fixation data Clustering (MEL only)
+
+* Same groups as comined data
+
+```{r,}
+df <- scale(select(userdata, matches('melfix|melswitches'), -matches('task')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =3)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# Eye Fixation data Clustering (LEL only)
+
+```{r,}
+df <- scale(select(userdata, matches('lelfix|lelswitches'), -matches('task')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# Mouse data Clustering (Mouse Data)
+
+```{r,}
+df <- scale(select(userdata, matches('mfixdur|mousecnt'), -matches('mel|lel|task')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# Mouse data Clustering (MEL Mouse Data)
+
+```{r,}
+df <- scale(select(userdata, matches('melmouse'), -matches('task')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =3)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 ```
 
-# Corrplot view
-```{r}
-cors <- cor.mtest(df[,c(2:20,39:54)], conf.level=0.95)
-corrplot(cor(df[,c(2:20,39:54)]), p.mat=cors$p, order="hclust", addrec=6, sig.level=0.05, insig="blank")
+# Mouse data Clustering (LEL Mouse Data)
+
+```{r,}
+df <- scale(select(userdata, matches('lelmouse'), -matches('task')))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =4)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 ```
 
+# SUS clustering
+
+```{r,}
+df <- scale(select(userdata, SUS, num_range('SUS', 1:10)))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+# SUS clustering (Learnability 4,10 only)
+
+```{r,}
+df <- scale(select(userdata, SUS4, SUS10))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+
+# SUS clustering (Usability only)
+
+```{r,}
+df <- scale(select(userdata, num_range('SUS', 1:10), -SUS4, -SUS10))
+colnames(df)
+hc <- hclust(dist(df))
+groups <- cutree(hc,k =2)
+groups <- cbind(userdata$ID, groups)
+print(g1 <- groups[groups[,2] == 1,1])
+print(g2 <- groups[groups[,2] == 2,1])
+h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+```
+
+
+# Significant test between groups
+
+```{r}
+userdata <- userdata %>%
+              mutate(learnability = SUS4 + SUS10,
+                     usability = SUS1 + SUS2 + SUS3 + SUS5 + SUS6 + SUS7 + SUS8 + SUS9)
+
+group1 <- userdata %>%
+  filter (ID %in% g1)
+
+group2 <- userdata %>%
+  filter (ID %in% g2)
+
+
+# Test for eye fixation count difference between two groups
+boxplot(rowSums(select(group1, matches('melfixcnt|lelfixcnt'), -matches('task'))),
+        rowSums(select(group2, matches('melfixcnt|lelfixcnt'), -matches('task'))))
+
+t.test(rowSums(select(group1, matches('melfixcnt|lelfixcnt'), -matches('task'))),
+        rowSums(select(group2, matches('melfixcnt|lelfixcnt'), -matches('task'))))
+
+wilcox.test(rowSums(select(group1, matches('melfixcnt|lelfixcnt'), -matches('task'))),
+        rowSums(select(group2, matches('melfixcnt|lelfixcnt'), -matches('task'))))
+
+
+# Test for eye fixation duration difference between two groups
+
+boxplot(rowSums(select(group1, matches('melfixdur|lelfixdur'), -matches('task'))),
+        rowSums(select(group2, matches('melfixdur|lelfixdur'), -matches('task'))))
+
+t.test(rowSums(select(group1, matches('melfixdur|lelfixdur'), -matches('task'))),
+        rowSums(select(group2, matches('melfixdur|lelfixdur'), -matches('task'))))
+
+wilcox.test(rowSums(select(group1, matches('melfixdur|lelfixdur'), -matches('task'))),
+            rowSums(select(group2, matches('melfixdur|lelfixdur'), -matches('task'))))
+
+
+# Test for SUS difference between two groups
+boxplot(group1$SUS, group2$SUS, names = c("Group1", "Group 2"))
+t.test(group1$SUS, group2$SUS)
+wilcox.test(group1$SUS, group2$SUS)
+
+summary(group1$SUS)
+sd(group1$SUS)
+summary(group2$SUS)
+sd(group2$SUS)
+
+# Test for SUS Learnability subscale difference between two groups
+boxplot(group1$learnability, group2$learnability, names = c("Group1", "Group 2"))
+t.test(group1$learnability, group2$learnability)
+wilcox.test(group1$learnability, group2$learnability)
+
+# Test for SUS Usability subscale difference between two groups
+boxplot(group1$usability, group2$usability, names = c("Group1", "Group 2"))
+t.test(group1$usability, group2$usability)
+wilcox.test(group1$usability, group2$usability)
+
+# Test for mouse fixation count difference between two groups
+
+boxplot(rowSums(select(group1, matches('mousecnt'), -matches('task'))),
+        rowSums(select(group2, matches('mousecnt'), -matches('task'))))
+
+t.test(rowSums(select(group1, matches('mousecnt'), -matches('task'))),
+        rowSums(select(group2, matches('mousecnt'), -matches('task'))))
+
+wilcox.test(rowSums(select(group1, matches('mousecnt'), -matches('task'))),
+        rowSums(select(group2, matches('mousecnt'), -matches('task'))))
+
+
+# Test for mouse fixation duration difference between two groups
+
+boxplot(rowSums(select(group1, matches('mfixdur'), -matches('task'))),
+        rowSums(select(group2, matches('mfixdur'), -matches('task'))))
+
+t.test(rowSums(select(group1, matches('mfixdur'), -matches('task'))),
+        rowSums(select(group2, matches('mfixdur'), -matches('task'))))
+
+wilcox.test(rowSums(select(group1, matches('mfixdur'), -matches('task'))),
+            rowSums(select(group2, matches('mfixdur'), -matches('task'))))
+```
