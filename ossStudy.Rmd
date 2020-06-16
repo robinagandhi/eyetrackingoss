@@ -337,6 +337,8 @@ sd(userdata$score[userdata$group == 1])
 sd(userdata$score[userdata$group == 2])
 sd(userdata$score[userdata$group == 3])
 
+t.test(userdata$score[group==1 | group==2], userdata$score[group==3])
+wilcox.test(userdata$score[group==1 | group==2], userdata$score[group==3])
 
 ```
 
