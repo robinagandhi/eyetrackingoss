@@ -170,14 +170,23 @@ userdata
 
 ```{r}
 
-g1 <- c(6, 7, 8, 2, 10)
-g2 <- c(1, 9, 3, 4, 5)
+g1 <- c(6, 7, 8)
+g2 <- c(1, 9, 3, 4, 5, 2, 10)
 
 group1 <- userdata %>%
   filter (ID %in% g1)
 
 group2 <- userdata %>%
   filter (ID %in% g2)
+
+# Test for score difference between two groups
+boxplot(group1$score, group2$score)
+shapiro.test(userdata$score)
+plot(density(userdata$score))
+t.test(group1$score, group2$score)
+```
+
+```{r}
 
 # Test for eye fixation count difference between two groups
 boxplot(rowSums(select(group1, matches('melfixcnt|lelfixcnt'), -matches('task'))),
@@ -246,11 +255,7 @@ wilcox.test(rowSums(select(group1, matches('mfixdur'), -matches('task'))),
             rowSums(select(group2, matches('mfixdur'), -matches('task'))))
 
 
-# Test for score difference between two groups
 
-boxplot(group1$score, group2$score)
-t.test(group1$score, group2$score)
-wilcox.test(group1$score, group2$score)
 
 boxplot(group1$conf, group2$conf)
 t.test(group1$conf, group2$conf)
