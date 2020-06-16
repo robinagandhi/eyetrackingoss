@@ -14,7 +14,7 @@ userdata
 # Eye Fixation data Clustering (MEL + LEL)
 
 ```{r,}
-df <- scale(select(userdata, matches('melfix|lelfix|switches'), -matches('task')))
+df <- scale(select(userdata, matches('melfix|lelfix|switches'), -matches('task'), -matches('melm|lelm')))
 colnames(df)
 hc <- hclust(dist(df))
 plot(hc)
@@ -65,7 +65,7 @@ h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 # Mouse data Clustering (MEL Mouse Data)
 
 ```{r,}
-df <- scale(select(userdata, matches('melmouse'), -matches('task')))
+df <- scale(select(userdata, matches('melmouse|melm'), -matches('task')))
 colnames(df)
 hc <- hclust(dist(df))
 groups <- cutree(hc,k =3)
@@ -78,13 +78,14 @@ h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 # Mouse data Clustering (LEL Mouse Data)
 
 ```{r,}
-df <- scale(select(userdata, matches('lelmouse'), -matches('task')))
+df <- scale(select(userdata, matches('lelmouse|lelm'), -matches('task')))
 colnames(df)
 hc <- hclust(dist(df))
-groups <- cutree(hc,k =4)
+groups <- cutree(hc,k =3)
 groups <- cbind(userdata$ID, groups)
 print(g1 <- groups[groups[,2] == 1,1])
 print(g2 <- groups[groups[,2] == 2,1])
+print(g3 <- groups[groups[,2] == 3,1])
 h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 ```
 
@@ -134,10 +135,11 @@ hc <- hclust(dist(df))
 hc2 <- hclust(dist(t(df)))
 plot(hc)
 plot(hc2)
-groups <- cutree(hc,k =2)
+groups <- cutree(hc,k =3)
 groups <- cbind(userdata$ID, groups)
 print(g1 <- groups[groups[,2] == 1,1])
 print(g2 <- groups[groups[,2] == 2,1])
+print(g3 <- groups[groups[,2] == 3,1])
 h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 ```
 
@@ -150,19 +152,26 @@ h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 userdata <- userdata %>%
               mutate(learnability = SUS4 + SUS10,
                      usability = SUS1 + SUS2 + SUS3 + SUS5 + SUS6 + SUS7 + SUS8 + SUS9,
-                     score = (melacc1 * ifelse(melconf1 == " h", 2, ifelse( melconf1 == " l", 1, 0)) +
-                                melacc2 * ifelse(melconf2 == " h", 2, ifelse( melconf2 == " l", 1, 0)) +
-                                lelacc1 * ifelse(lelconf1 == " h", 2, ifelse( lelconf1 == " l", 1, 0)) +
-                                lelacc2 * ifelse(lelconf2 == " h", 2, ifelse( lelconf2 == " l", 1, 0)))/8*100,
-                     conf = (ifelse(melconf1 == " h", 2, ifelse( melconf1 == " l", 1, 0)) +
-                                ifelse(melconf2 == " h", 2, ifelse( melconf2 == " l", 1, 0)) +
-                                ifelse(lelconf1 == " h", 2, ifelse( lelconf1 == " l", 1, 0)) +
-                                ifelse(lelconf2 == " h", 2, ifelse( lelconf2 == " l", 1, 0)))/8*100)
-
+                     score = (melacc1 * ifelse(melconf1 == " h", 3, ifelse( melconf1 == " l", 2, 1)) +
+                                melacc2 * ifelse(melconf2 == " h", 3, ifelse( melconf2 == " l", 2, 1)) +
+                                lelacc1 * ifelse(lelconf1 == " h", 3, ifelse( lelconf1 == " l", 2, 1)) +
+                                lelacc2 * ifelse(lelconf2 == " h", 3, ifelse( lelconf2 == " l", 2, 1)))/12*100,
+                     conf = (ifelse(melconf1 == " h", 3, ifelse( melconf1 == " l", 2, 1)) +
+                                ifelse(melconf2 == " h", 3, ifelse( melconf2 == " l", 2, 1)) +
+                                ifelse(lelconf1 == " h", 3, ifelse( lelconf1 == " l", 2, 1)) +
+                                ifelse(lelconf2 == " h", 3, ifelse( lelconf2 == " l", 2, 1)))/12*100,
+                     rawscore = melacc1+melacc2+lelacc1+lelacc2)
+group <- as.factor(groups[,2])
+userdata <- cbind(group, userdata)
+#userdata <- userdata[(ID != 3 & ID != 6),] 
+userdata
 ```
 
 
 ```{r}
+
+g1 <- c(6, 7, 8, 2, 10)
+g2 <- c(1, 9, 3, 4, 5)
 
 group1 <- userdata %>%
   filter (ID %in% g1)
@@ -247,4 +256,101 @@ boxplot(group1$conf, group2$conf)
 t.test(group1$conf, group2$conf)
 wilcox.test(group1$conf, group2$conf)
 ```
+# Three Group Analysis
+```{r}
+attach(userdata)
+# Test for eye fixation count difference between two groups
+boxplot(rowSums(select(userdata, matches('melfixcnt|lelfixcnt'), -matches('task')))~userdata$group)
 
+res.aov <- aov(rowSums(select(userdata, matches('melfixcnt|lelfixcnt'), -matches('task')))~userdata$group)
+summary(res.aov)
+TukeyHSD(res.aov)
+
+```
+
+```{r}
+# Test for eye fixation duration difference between two groups
+boxplot(rowSums(select(userdata, matches('melfixdur|lelfixdur'), -matches('task')))~group)
+res.aov <- aov(rowSums(select(userdata, matches('melfixdur|lelfixdur'), -matches('task')))~group)
+summary(res.aov)
+TukeyHSD(res.aov)
+```
+
+
+
+```{r}
+# Test for SUS difference between two groups
+boxplot(SUS~group, names = c("Group1", "Group 2", "Group 3"))
+res.aov <- aov(SUS~group)
+summary(res.aov)
+TukeyHSD(res.aov)
+```
+
+
+```{r}
+# Test for SUS Learnability subscale difference between two groups
+boxplot(learnability~group, names = c("Group1", "Group 2", "Group 3"))
+res.aov <- aov(learnability~group)
+summary(res.aov)
+TukeyHSD(res.aov)
+```
+
+
+```{r}
+# Test for SUS Usability subscale difference between two groups
+boxplot(usability~group, names = c("Group1", "Group 2", "Group 3"))
+res.aov <- aov(usability~group)
+summary(res.aov)
+TukeyHSD(res.aov)
+```
+
+```{r}
+# Test for mouse fixation count difference between two groups
+
+boxplot(rowSums(select(userdata, matches('mousecnt'), -matches('task')))~group)
+res.aov <- aov(rowSums(select(userdata, matches('mousecnt'), -matches('task')))~group)
+summary(res.aov)
+TukeyHSD(res.aov)
+```
+```{r}
+# Test for mouse fixation duration difference between two groups
+
+boxplot(rowSums(select(userdata, matches('mfixdur'), -matches('task')))~group)
+res.aov <- aov(rowSums(select(userdata, matches('mfixdur'), -matches('task')))~group)
+summary(res.aov)
+TukeyHSD(res.aov)
+
+```
+```{r}
+# Test for score difference between two groups
+
+boxplot(userdata$score~userdata$group)
+res.aov <- aov(score~group)
+summary(res.aov)
+TukeyHSD(res.aov)
+
+summary(userdata$score[userdata$group == 1])
+summary(userdata$score[userdata$group == 2])
+summary(userdata$score[userdata$group == 3])
+
+sd(userdata$score[userdata$group == 1])
+sd(userdata$score[userdata$group == 2])
+sd(userdata$score[userdata$group == 3])
+
+
+```
+
+```{r}
+boxplot(conf~group)
+res.aov <- aov(conf~group)
+summary(res.aov)
+TukeyHSD(res.aov)
+
+summary(userdata$conf[userdata$group == 1])
+summary(userdata$conf[userdata$group == 2])
+summary(userdata$conf[userdata$group == 3])
+
+sd(userdata$conf[userdata$group == 1])
+sd(userdata$conf[userdata$group == 2])
+sd(userdata$conf[userdata$group == 3])
+```
