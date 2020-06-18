@@ -129,13 +129,14 @@ h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 # All Tracking Data
 
 ```{r}
-df <- scale(select(userdata, matches('melfix|lelfix|switches'), matches('melm'), matches('lelm'), -matches('task'))) # -matches('hierarchy|hierachy')
+df <- scale(select(userdata, matches('melfix|lelfix|switches'), matches('melm'), matches('lelm'), matches('task'))) # -matches('hierarchy|hierachy')
 colnames(df)
 hc <- hclust(dist(df))
 hc2 <- hclust(dist(t(df)))
+par(mar=c(3,1,1,10))
+plot(as.dendrogram(hc2),horiz=T)
 plot(hc)
-plot(hc2)
-groups <- cutree(hc,k =3)
+groups <- cutree(hc,k =2)
 groups <- cbind(userdata$ID, groups)
 print(g1 <- groups[groups[,2] == 1,1])
 print(g2 <- groups[groups[,2] == 2,1])
@@ -170,8 +171,8 @@ userdata
 
 ```{r}
 
-g1 <- c(6, 7, 8)
-g2 <- c(1, 9, 3, 4, 5, 2, 10)
+# g1 <- c(6, 7, 8)
+# g2 <- c(1, 9, 3, 4, 5, 2, 10)
 
 group1 <- userdata %>%
   filter (ID %in% g1)
@@ -184,6 +185,7 @@ boxplot(group1$score, group2$score)
 shapiro.test(userdata$score)
 plot(density(userdata$score))
 t.test(group1$score, group2$score)
+wilcox.test(group1$score, group2$score)
 ```
 
 ```{r}
