@@ -206,28 +206,18 @@ dixon.test(userdata$score, type=10, opposite = T, two.sided = TRUE)
 # Test for composite score difference between two groups
 userdata <- userdata[userdata$score != 0,]
 boxplot(userdata$score~userdata$group, names = c("G1", "G2", "G3"), ylab = "Total Score")
-shapiro.test(userdata$score)
-plot(density(userdata$score))
-#t.test(userdata$score~userdata$group)
-res.aov <- aov(userdata$score~userdata$group) # p-value 0.036, Significant even with a small sample. So we can expect even larger effect size with a larger sample size.
-summary(res.aov)
-TukeyHSD(res.aov)
+kruskal.test(userdata$score~userdata$group) 
+pairwise.wilcox.test(userdata$score, userdata$group, p.adjust.method = "BH")
 
 # Test for raw score difference between two groups
 boxplot(userdata$rawscore~userdata$group, names = c("G1", "G2", "G3"), ylab = "Raw Score")
-shapiro.test(userdata$rawscore)
-plot(density(userdata$rawscore))
-#t.test(userdata$rawscore~userdata$group)
-res.aov <- aov(userdata$rawscore~userdata$group) # p-value 0.043, Significant even with a small sample. So we can expect even larger effect size with a larger sample size.
-summary(res.aov)
-TukeyHSD(res.aov)
+kruskal.test(userdata$rawscore~userdata$group)
+pairwise.wilcox.test(userdata$rawscore, userdata$group, p.adjust.method = "none") 
 
 # Test for confidence difference between two groups
 boxplot(userdata$conf~userdata$group, names = c("G1", "G2", "G3"), ylab = "Mean Confidence")
-#t.test(userdata$conf~userdata$group)
-res.aov <- aov(userdata$conf~userdata$group) # p-value = 0.79. Not significant. No difference between confidence. Perhaps with more training the confidence values may show difference. 
-summary(res.aov)
-TukeyHSD(res.aov)
+kruskal.test(userdata$conf~userdata$group)
+pairwise.wilcox.test(userdata$conf, userdata$group, p.adjust.method = "none") 
 
 ```
 
