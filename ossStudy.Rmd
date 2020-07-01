@@ -7,6 +7,8 @@ output: html_notebook
 
 ```{r}
 library(dplyr)
+library(clValid) # For Dunn's Index
+library(dendextend)
 userdata <- read.csv("OSSStudy6.csv", header=T)
 userdata
 ```
@@ -18,7 +20,7 @@ Groups:
 [1] 2 6 7 8 10
 
 ```{r,}
-df <- scale(select(userdata, matches('melfix|lelfix|switches'), -matches('melm|lelm|mouse|mfix')))
+df <- scale(dplyr::select(userdata, matches('melfix|lelfix|switches'), -matches('melm|lelm|mouse|mfix')))
 colnames(df)
 hc <- hclust(dist(df))
 plot(hc)
@@ -35,7 +37,7 @@ Groups:
 [1] 2 6 7 8 10
 
 ```{r,}
-df <- scale(select(userdata, matches('melfix|melswitches'), -matches('mouse|lel|mfix')))
+df <- scale(dplyr::select(userdata, matches('melfix|melswitches'), -matches('mouse|lel|mfix')))
 colnames(df)
 hc <- hclust(dist(df))
 groups <- cutree(hc,k =2)
@@ -51,7 +53,7 @@ Groups:
 [1] 6 7 8
 
 ```{r,}
-df <- scale(select(userdata, matches('lelfix|lelswitches'), -matches('mouse|mel|mfix')))
+df <- scale(dplyr::select(userdata, matches('lelfix|lelswitches'), -matches('mouse|mel|mfix')))
 colnames(df)
 hc <- hclust(dist(df))
 groups <- cutree(hc,k =2)
@@ -67,7 +69,7 @@ Groups:
 [1] 6 7 8
 
 ```{r,}
-df <- scale(select(userdata, matches('melmouse|melm'), matches('lelmouse|lelm')))
+df <- scale(dplyr::select(userdata, matches('melmouse|melm'), matches('lelmouse|lelm')))
 colnames(df)
 hc <- hclust(dist(df))
 groups <- cutree(hc,k =2)
@@ -83,7 +85,7 @@ Groups:
 [1] 2 6 
 
 ```{r,}
-df <- scale(select(userdata, matches('melmouse|melm')))
+df <- scale(dplyr::select(userdata, matches('melmouse|melm')))
 colnames(df)
 hc <- hclust(dist(df))
 groups <- cutree(hc,k =2)
@@ -100,7 +102,7 @@ Groups:
 [1] 2 4 6 7 8 10
 
 ```{r,}
-df <- scale(select(userdata, matches('lelmouse|lelm')))
+df <- scale(dplyr::select(userdata, matches('lelmouse|lelm')))
 colnames(df)
 hc <- hclust(dist(df))
 groups <- cutree(hc,k =2)
@@ -117,18 +119,52 @@ Groups:
 [1] 6 7 8
 
 ```{r}
-df <- scale(select(userdata, matches('melfix|lelfix|switches|melm|lelm')))
+df <- scale(dplyr::select(userdata, matches('melfix|lelfix|switches|melm|lelm')))
 colnames(df)
-hc <- hclust(dist(df))
-hc2 <- hclust(dist(t(df)))
-par(mar=c(3,1,1,10))
-plot(as.dendrogram(hc2),horiz=T)
+Dist <- dist(df, method="euclidean")
+hc <- hclust(Dist, method ="complete")
 plot(hc)
-groups <- cutree(hc,k =2)
+groups <- cutree(hc,k =3)
+dunn(Dist, groups)
+
+avg_dend_obj <- as.dendrogram(hc)
+avg_col_dend <- color_branches(avg_dend_obj, k = 3)
+plot(avg_col_dend, ylab="Height", xlab="Participants")
+
+```
+
+
+
+```{r}
+#Plot Feature Dendrogram
+hc2 <- hclust(dist(t(df)))
+avg_dend_obj <- as.dendrogram(hc2)
+avg_col_dend <- color_branches(avg_dend_obj, k = 3)
+plot(avg_col_dend,horiz=T, ylab="Height", xlab="Participants", asp = 0.5)
+
+#Identify groups
 groups <- cbind(userdata$ID, groups)
 print(g1 <- groups[groups[,2] == 1,1])
 print(g2 <- groups[groups[,2] == 2,1])
+print(g3 <- groups[groups[,2] == 3,1])
+
+#Heatmap
 h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
+
+```
+
+# Convergent Validity with K-means
+
+* Same clusters reported as hierarchical clustering
+
+```{r}
+
+#K-means Clustering
+set.seed(20)
+clusters <- kmeans(df, 3)
+glimpse(clusters$cluster)
+userdata$kgroup <- as.factor(clusters$cluster)
+
 ```
 
 # Compute Composite Score and Assign numerical values to Confidence
@@ -139,39 +175,60 @@ h <- heatmap(df, distfun = dist, hclustfun = hclust, scale="none")
 userdata <- userdata %>%
               mutate(learnability = SUS4 + SUS10,
                      usability = SUS1 + SUS2 + SUS3 + SUS5 + SUS6 + SUS7 + SUS8 + SUS9,
-                     score = (melacc1 * ifelse(melconf1 == " h", 3, ifelse( melconf1 == " l", 2, 1)) +
+                     score = as.integer((melacc1 * ifelse(melconf1 == " h", 3, ifelse( melconf1 == " l", 2, 1)) +
                                 melacc2 * ifelse(melconf2 == " h", 3, ifelse( melconf2 == " l", 2, 1)) +
                                 lelacc1 * ifelse(lelconf1 == " h", 3, ifelse( lelconf1 == " l", 2, 1)) +
-                                lelacc2 * ifelse(lelconf2 == " h", 3, ifelse( lelconf2 == " l", 2, 1)))/12*100,
-                     conf = (ifelse(melconf1 == " h", 3, ifelse( melconf1 == " l", 2, 1)) +
+                                lelacc2 * ifelse(lelconf2 == " h", 3, ifelse( lelconf2 == " l", 2, 1)))/12*100),
+                     conf = as.integer((ifelse(melconf1 == " h", 3, ifelse( melconf1 == " l", 2, 1)) +
                                 ifelse(melconf2 == " h", 3, ifelse( melconf2 == " l", 2, 1)) +
                                 ifelse(lelconf1 == " h", 3, ifelse( lelconf1 == " l", 2, 1)) +
-                                ifelse(lelconf2 == " h", 3, ifelse( lelconf2 == " l", 2, 1)))/12*100,
+                                ifelse(lelconf2 == " h", 3, ifelse( lelconf2 == " l", 2, 1)))/12*100),
                      rawscore = melacc1+melacc2+lelacc1+lelacc2)
 
 # Add group as a factor
 group <- as.factor(groups[,2])
-userdata <- cbind(group, userdata)
+userdata <- cbind(userdata, group)
 glimpse(userdata)
+```
+#Dixon's test for outliers
+* Source https://cran.r-project.org/web/packages/outliers/outliers.pdf 
+
+```{r}
+library("outliers")
+shapiro.test(userdata$score)
+plot(density(userdata$score))
+dixon.test(userdata$score, type=10, opposite = T, two.sided = TRUE)
+
 ```
 
 
 ```{r}
 # Test for composite score difference between two groups
-boxplot(userdata$score~userdata$group, names = c("G1", "G2"), ylab = "Total Score")
+userdata <- userdata[userdata$score != 0,]
+boxplot(userdata$score~userdata$group, names = c("G1", "G2", "G3"), ylab = "Total Score")
 shapiro.test(userdata$score)
 plot(density(userdata$score))
-t.test(userdata$score~userdata$group) # p-value 0.036, Significant even with a small sample. So we can expect even larger effect size with a larger sample size.
+#t.test(userdata$score~userdata$group)
+res.aov <- aov(userdata$score~userdata$group) # p-value 0.036, Significant even with a small sample. So we can expect even larger effect size with a larger sample size.
+summary(res.aov)
+TukeyHSD(res.aov)
 
 # Test for raw score difference between two groups
-boxplot(userdata$rawscore~userdata$group, names = c("G1", "G2"), ylab = "Raw Score")
+boxplot(userdata$rawscore~userdata$group, names = c("G1", "G2", "G3"), ylab = "Raw Score")
 shapiro.test(userdata$rawscore)
 plot(density(userdata$rawscore))
-t.test(userdata$rawscore~userdata$group) # p-value 0.043, Significant even with a small sample. So we can expect even larger effect size with a larger sample size.
+#t.test(userdata$rawscore~userdata$group)
+res.aov <- aov(userdata$rawscore~userdata$group) # p-value 0.043, Significant even with a small sample. So we can expect even larger effect size with a larger sample size.
+summary(res.aov)
+TukeyHSD(res.aov)
 
 # Test for confidence difference between two groups
-boxplot(userdata$conf~userdata$group, names = c("G1", "G2"), ylab = "Mean Confidence")
-t.test(userdata$conf~userdata$group) # p-value = 0.79. Not significant. No difference between confidence. Perhaps with more training the confidence values may show difference. 
+boxplot(userdata$conf~userdata$group, names = c("G1", "G2", "G3"), ylab = "Mean Confidence")
+#t.test(userdata$conf~userdata$group)
+res.aov <- aov(userdata$conf~userdata$group) # p-value = 0.79. Not significant. No difference between confidence. Perhaps with more training the confidence values may show difference. 
+summary(res.aov)
+TukeyHSD(res.aov)
+
 ```
 
 # Eye tracking fixation count and duration differences between groups
@@ -186,24 +243,28 @@ group1 <- userdata %>%
 group2 <- userdata %>%
   filter (ID %in% g2)
 
+group3 <- userdata %>%
+  filter (ID %in% g3)
+
 # Test for eye fixation count difference between two groups
-boxplot(rowMeans(select(group1, matches('melfixcnt|lelfixcnt'))),
-        rowMeans(select(group2, matches('melfixcnt|lelfixcnt'))), names = c("G1", "G2"), ylab = "Eye Fixation Count")
+boxplot(rowMeans(dplyr::select(group1, matches('melfixcnt|lelfixcnt'))),
+        rowMeans(dplyr::select(group2, matches('melfixcnt|lelfixcnt'))), 
+        rowMeans(dplyr::select(group3, matches('melfixcnt|lelfixcnt'))), names = c("G1", "G2", "G3"), ylab = "Eye Fixation Count")
 
-shapiro.test(rowMeans(select(userdata, matches('melfixcnt|lelfixcnt')))) # distribution normal
+shapiro.test(rowMeans(dplyr::select(userdata, matches('melfixcnt|lelfixcnt')))) # distribution normal
 
-t.test(rowMeans(select(group1, matches('melfixcnt|lelfixcnt'))),
-        rowMeans(select(group2, matches('melfixcnt|lelfixcnt')))) # Significant difference
+t.test(rowMeans(dplyr::select(group1, matches('melfixcnt|lelfixcnt'))),
+        rowMeans(dplyr::select(group2, matches('melfixcnt|lelfixcnt')))) # Significant difference
 
 # Test for eye fixation duration difference between two groups
 
-boxplot(rowMeans(select(group1, matches('melfixdur|lelfixdur'))),
-        rowMeans(select(group2, matches('melfixdur|lelfixdur'))), names = c("G1", "G2"), ylab = "Eye Fixation Duration")
+boxplot(rowMeans(dplyr::select(group1, matches('melfixdur|lelfixdur'))),
+        rowMeans(dplyr::select(group2, matches('melfixdur|lelfixdur'))), names = c("G1", "G2"), ylab = "Eye Fixation Duration")
 
-shapiro.test(rowMeans(select(userdata, matches('melfixdur|lelfixdur')))) # distribution normal
+shapiro.test(rowMeans(dplyr::select(userdata, matches('melfixdur|lelfixdur')))) # distribution normal
 
-t.test(rowMeans(select(group1, matches('melfixdur|lelfixdur')),
-        rowMeans(select(group2, matches('melfixdur|lelfixdur'))))) # Very significant difference
+t.test(rowMeans(dplyr::select(group1, matches('melfixdur|lelfixdur')),
+        rowMeans(dplyr::select(group2, matches('melfixdur|lelfixdur'))))) # Very significant difference
 
 ```
 
@@ -215,26 +276,26 @@ t.test(rowMeans(select(group1, matches('melfixdur|lelfixdur')),
 
 # Test for mouse fixation count difference between two groups
 
-boxplot(rowMeans(select(group1, matches('mousecnt'))),
-        rowMeans(select(group2, matches('mousecnt'))), names = c("G1", "G2"), ylab = "Mouse Fixation Count")
+boxplot(rowMeans(dplyr::select(group1, matches('mousecnt'))),
+        rowMeans(dplyr::select(group2, matches('mousecnt'))), names = c("G1", "G2"), ylab = "Mouse Fixation Count")
 
-shapiro.test(rowMeans(select(userdata, matches('mousecnt')))) # distribution normal
-plot(density(rowMeans(select(userdata, matches('mousecnt')))))
+shapiro.test(rowMeans(dplyr::select(userdata, matches('mousecnt')))) # distribution normal
+plot(density(rowMeans(dplyr::select(userdata, matches('mousecnt')))))
 
-t.test(rowMeans(select(group1, matches('mousecnt'))),
-        rowMeans(select(group2, matches('mousecnt')))) # Significant difference
+t.test(rowMeans(dplyr::select(group1, matches('mousecnt'))),
+        rowMeans(dplyr::select(group2, matches('mousecnt')))) # Significant difference
 
 
 # Test for mouse fixation duration difference between two groups
 
-boxplot(rowMeans(select(group1, matches('mfixdur'))),
-        rowMeans(select(group2, matches('mfixdur'), -matches('task'))), names = c("G1", "G2"), ylab = "Mouse Fixation Duration")
+boxplot(rowMeans(dplyr::select(group1, matches('mfixdur'))),
+        rowMeans(dplyr::select(group2, matches('mfixdur'), -matches('task'))), names = c("G1", "G2"), ylab = "Mouse Fixation Duration")
 
-shapiro.test(rowMeans(select(userdata, matches('mfixdur')))) # distribution ("barely") normal
-plot(density(rowMeans(select(userdata, matches('mfixdur')))))
+shapiro.test(rowMeans(dplyr::select(userdata, matches('mfixdur')))) # distribution ("barely") normal
+plot(density(rowMeans(dplyr::select(userdata, matches('mfixdur')))))
 
-t.test(rowMeans(select(group1, matches('mfixdur'), -matches('task'))),
-        rowMeans(select(group2, matches('mfixdur'), -matches('task')))) # NO significant difference
+t.test(rowMeans(dplyr::select(group1, matches('mfixdur'), -matches('task'))),
+        rowMeans(dplyr::select(group2, matches('mfixdur'), -matches('task')))) # NO significant difference
 ```
 
 
@@ -266,80 +327,80 @@ wilcox.test(group1$usability, group2$usability)
 ```
 ```{r}
 #Eye Tracking Fixation Duration Hierarchy Means across groups
-eDurHierarchyG1 <- mean(colMeans(select(group1, matches('durhierachy'), -matches("mouse|cnt|mfix"))))
-eDurHierarchyG2 <- mean(colMeans(select(group2, matches('durhierachy'), -matches("mouse|cnt|mfix"))))
+eDurHierarchyG1 <- mean(colMeans(dplyr::select(group1, matches('durhierachy'), -matches("mouse|cnt|mfix"))))
+eDurHierarchyG2 <- mean(colMeans(dplyr::select(group2, matches('durhierachy'), -matches("mouse|cnt|mfix"))))
 
 #Eye Tracking Fixation Count Hierarchy Means across groups
-eCntHierarchyG1 <- mean(colMeans(select(group1, matches('cnthierachy'), -matches("mouse"))))
-eCntHierarchyG2 <- mean(colMeans(select(group2, matches('cnthierachy'), -matches("mouse"))))
+eCntHierarchyG1 <- mean(colMeans(dplyr::select(group1, matches('cnthierachy'), -matches("mouse"))))
+eCntHierarchyG2 <- mean(colMeans(dplyr::select(group2, matches('cnthierachy'), -matches("mouse"))))
 
 #Eye Tracking Fixation Duration Text Means across groups
-eDurTextG1 <- mean(colMeans(select(group1, matches('durtext'), -matches("mouse|mfix"))))
-eDurTextG2 <- mean(colMeans(select(group2, matches('durtext'), -matches("mouse|mfix"))))
+eDurTextG1 <- mean(colMeans(dplyr::select(group1, matches('durtext'), -matches("mouse|mfix"))))
+eDurTextG2 <- mean(colMeans(dplyr::select(group2, matches('durtext'), -matches("mouse|mfix"))))
 
 #Eye Tracking Fixation Count Text Means across groups
-eCntTextG1 <- mean(colMeans(select(group1, matches('cnttext'), -matches("mouse|mfix"))))
-eCntTextG2 <- mean(colMeans(select(group2, matches('cnttext'), -matches("mouse|mfix"))))
+eCntTextG1 <- mean(colMeans(dplyr::select(group1, matches('cnttext'), -matches("mouse|mfix"))))
+eCntTextG2 <- mean(colMeans(dplyr::select(group2, matches('cnttext'), -matches("mouse|mfix"))))
 
 #Eye Tracking Fixation Duration Model Means across groups
-eDurModelG1 <- mean(colMeans(select(group1, matches('durmodel'), -matches("mouse|mfix"))))
-eDurModelG2 <- mean(colMeans(select(group2, matches('durmodel'), -matches("mouse|mfix"))))
+eDurModelG1 <- mean(colMeans(dplyr::select(group1, matches('durmodel'), -matches("mouse|mfix"))))
+eDurModelG2 <- mean(colMeans(dplyr::select(group2, matches('durmodel'), -matches("mouse|mfix"))))
 
 #Eye Tracking Fixation Count Model Means across groups
-eCntModelG1 <- mean(colMeans(select(group1, matches('cntmodel'), -matches("mouse|mfix"))))
-eCntModelG2 <- mean(colMeans(select(group2, matches('cntmodel'), -matches("mouse|mfix"))))
+eCntModelG1 <- mean(colMeans(dplyr::select(group1, matches('cntmodel'), -matches("mouse|mfix"))))
+eCntModelG2 <- mean(colMeans(dplyr::select(group2, matches('cntmodel'), -matches("mouse|mfix"))))
 
 #Eye Tracking Fixation Duration Task Means across groups
-eDurTaskG1 <- mean(colMeans(select(group1, matches('durtask'), -matches("mouse|mfix"))))
-eDurTaskG2 <- mean(colMeans(select(group2, matches('durtask'), -matches("mouse|mfix"))))
+eDurTaskG1 <- mean(colMeans(dplyr::select(group1, matches('durtask'), -matches("mouse|mfix"))))
+eDurTaskG2 <- mean(colMeans(dplyr::select(group2, matches('durtask'), -matches("mouse|mfix"))))
 
 #Eye Tracking Fixation Count task Means across groups
-eCntTaskG1 <- mean(colMeans(select(group1, matches('cnttask'), -matches("mouse|mfix"))))
-eCntTaskG2 <- mean(colMeans(select(group2, matches('cnttask'), -matches("mouse|mfix"))))
+eCntTaskG1 <- mean(colMeans(dplyr::select(group1, matches('cnttask'), -matches("mouse|mfix"))))
+eCntTaskG2 <- mean(colMeans(dplyr::select(group2, matches('cnttask'), -matches("mouse|mfix"))))
 
 ```
 
 ```{r}
 #Mouse Tracking Fixation Duration Hierarchy Means across groups
-mDurHierarchyG1 <- mean(colMeans(select(group1, matches('melmfixdurhierachy|lelmfixdurhierachy'))))
-mDurHierarchyG2 <- mean(colMeans(select(group2, matches('melmfixdurhierachy|lelmfixdurhierachy'))))
+mDurHierarchyG1 <- mean(colMeans(dplyr::select(group1, matches('melmfixdurhierachy|lelmfixdurhierachy'))))
+mDurHierarchyG2 <- mean(colMeans(dplyr::select(group2, matches('melmfixdurhierachy|lelmfixdurhierachy'))))
 
 #Mouse Tracking Fixation Count Hierarchy Means across groups
-mCntHierarchyG1 <- mean(colMeans(select(group1, matches('lelmousecnthierachy|melmousecnthierachy'))))
-mCntHierarchyG2 <- mean(colMeans(select(group2, matches('lelmousecnthierachy|melmousecnthierachy'))))
+mCntHierarchyG1 <- mean(colMeans(dplyr::select(group1, matches('lelmousecnthierachy|melmousecnthierachy'))))
+mCntHierarchyG2 <- mean(colMeans(dplyr::select(group2, matches('lelmousecnthierachy|melmousecnthierachy'))))
 
 #Mouse Tracking Fixation Duration Text Means across groups
-mDurTextG1 <- mean(colMeans(select(group1, matches('melmfixdurtext|lelmfixdurtext'))))
-mDurTextG2 <- mean(colMeans(select(group2, matches('melmfixdurtext|lelmfixdurtext'))))
+mDurTextG1 <- mean(colMeans(dplyr::select(group1, matches('melmfixdurtext|lelmfixdurtext'))))
+mDurTextG2 <- mean(colMeans(dplyr::select(group2, matches('melmfixdurtext|lelmfixdurtext'))))
 
 #Mouse Tracking Fixation Count Text Means across groups
-mCntTextG1 <- mean(colMeans(select(group1, matches('melmousecnttext|lelmousecnttext'))))
-mCntTextG2 <- mean(colMeans(select(group2, matches('melmousecnttext|lelmousecnttext'))))
+mCntTextG1 <- mean(colMeans(dplyr::select(group1, matches('melmousecnttext|lelmousecnttext'))))
+mCntTextG2 <- mean(colMeans(dplyr::select(group2, matches('melmousecnttext|lelmousecnttext'))))
 
 #Mouse Tracking Fixation Duration Model Means across groups
-mDurModelG1 <- mean(colMeans(select(group1, matches('melmfixdurmodel|lelmfixdurmodel'))))
-mDurModelG2 <- mean(colMeans(select(group2, matches('melmfixdurmodel|lelmfixdurmodel'))))
+mDurModelG1 <- mean(colMeans(dplyr::select(group1, matches('melmfixdurmodel|lelmfixdurmodel'))))
+mDurModelG2 <- mean(colMeans(dplyr::select(group2, matches('melmfixdurmodel|lelmfixdurmodel'))))
 
 #Mouse Tracking Fixation Count Model Means across groups
-mCntModelG1 <- mean(colMeans(select(group1, matches('melmousecntmodel|lelmousecntmodel'))))
-mCntModelG2 <- mean(colMeans(select(group2, matches('melmousecntmodel|lelmousecntmodel'))))
+mCntModelG1 <- mean(colMeans(dplyr::select(group1, matches('melmousecntmodel|lelmousecntmodel'))))
+mCntModelG2 <- mean(colMeans(dplyr::select(group2, matches('melmousecntmodel|lelmousecntmodel'))))
 
 #Mouse Tracking Fixation Duration Task Means across groups
-mDurTaskG1 <- mean(colMeans(select(group1, matches('melmfixdurtask|lelmfixdurtask'))))
-mDurTaskG2 <- mean(colMeans(select(group2, matches('melmfixdurtask|lelmfixdurtask'))))
+mDurTaskG1 <- mean(colMeans(dplyr::select(group1, matches('melmfixdurtask|lelmfixdurtask'))))
+mDurTaskG2 <- mean(colMeans(dplyr::select(group2, matches('melmfixdurtask|lelmfixdurtask'))))
 
 #Mouse Tracking Fixation Count Task Means across groups
-mCntTaskG1 <- mean(colMeans(select(group1, matches('melmousecnttask|lelmousecnttask'))))
-mCntTaskG2 <- mean(colMeans(select(group2, matches('melmousecnttask|lelmousecnttask'))))
+mCntTaskG1 <- mean(colMeans(dplyr::select(group1, matches('melmousecnttask|lelmousecnttask'))))
+mCntTaskG2 <- mean(colMeans(dplyr::select(group2, matches('melmousecnttask|lelmousecnttask'))))
 ```
 ```{r}
 #Eye Tracking AOI switches means across Groups
-eAOIswitchG1 <- median(colMeans(select(group1, matches('lswitches'))))
-eAOIswitchG2 <- median(colMeans(select(group2, matches('lswitches'))))
+eAOIswitchG1 <- median(colMeans(dplyr::select(group1, matches('lswitches'))))
+eAOIswitchG2 <- median(colMeans(dplyr::select(group2, matches('lswitches'))))
 
 #Eye Tracking AOI switches means across Groups
-mAOIswitchG1 <- median(colMeans(select(group1, matches('mswitches'))))
-mAOIswitchG2 <- median(colMeans(select(group2, matches('mswitches'))))
+mAOIswitchG1 <- median(colMeans(dplyr::select(group1, matches('mswitches'))))
+mAOIswitchG2 <- median(colMeans(dplyr::select(group2, matches('mswitches'))))
 
 ```
 
