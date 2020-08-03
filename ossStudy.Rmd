@@ -10,6 +10,7 @@ library(dplyr)
 library(clValid) # For Dunn's Index
 library(dendextend)
 library(tidyverse)
+library(lsr)
 userdata <- read.csv("OSSStudy6.csv", header=T)
 userdata
 ```
@@ -379,7 +380,67 @@ cor(userdata$totaleDurTask,userdata$mfixdurtask)
 cor(userdata$totaleCntHierarchy,userdata$mousecnthierachy)
 cor(userdata$totaleDurHierarchy,userdata$mfixdurhierachy)
 
+mean(userdata$totaleCntHierarchy)
+mean(userdata$mousecnthierachy)
+
+mean(userdata$totaleDurHierarchy)
+mean(userdata$mfixdurhierachy)
+
 
 ```
 
+# Plot figure for Feature Clusters
+
+```{r}
+colnames(df) <- c("Hierarchy Eye MEL Fix Cnt", 
+                  "Model Eye MEL Fix Cnt", 
+                  "Task Eye MEL Fix Cnt", 
+                  "Text Eye MEL Fix Cnt", 
+                  
+                  "Hierarchy Eye LEL Fix Cnt",   
+                  "Model Eye LEL Fix Cnt",  
+                  "Task Eye LEL Fix Cnt",  
+                  "Text Eye LEL Fix Cnt", 
+                  
+                  "Hierarchy Eye MEL Fix Dur", 
+                  "Model Eye MEL Fix Dur",      
+                  "Task Eye MEL Fix Dur", 
+                  "Text Eye MEL Fix Dur", 
+                  
+                  "Hierarchy Eye LEL Fix Dur",   
+                  "Model Eye LEL Fix Dur",  
+                  "Task Eye LEL Fix Dur",  
+                  "Text Eye LEL Fix Dir",
+                  
+                  "Eye MEL Switches",  
+                  "Eye LEL Switches" , 
+                  
+                  "Hierarchy Mouse MEL Cnt", 
+                  "Model Mouse MEL Cnt", 
+                  "Task Mouse MEL Cnt", 
+                  "Text Mouse MEL Cnt", 
+                  
+                  "Hierarchy Mouse MEL Dur", 
+                  "Model Mouse MEL Dur", 
+                  "Task Mouse MEL Dur", 
+                  "Text Mouse MEL Dur",  
+                  
+                  "Hierarchy Mouse LEL Cnt", 
+                  "Model Mouse LEL Cnt", 
+                  "Task Mouse LEL Cnt", 
+                  "Text Mouse LEL Cnt", 
+                  
+                  "Hierarchy Mouse LEL Dur", 
+                  "Model Mouse LEL Dur", 
+                  "Task Mouse LEL Dur", 
+                  "Text Mouse LEL Dur",   
+                  
+                  "Mouse MEL Switches",  
+                  "Mouse LEL Switches")
+
+hc2 <- hclust(dist(t(df)))
+avg_dend_obj <- as.dendrogram(hc2)
+avg_col_dend <- color_branches(avg_dend_obj, k = 3)
+plot(avg_col_dend,horiz=T, ylab="Height", xlab="Participants", asp = 0.5)
 ```
+
