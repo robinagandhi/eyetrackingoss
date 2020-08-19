@@ -239,8 +239,10 @@ p <- ggplot(userdata, aes(x=group, y=score, fill = group)) +
   geom_boxplot()
 p <- p + labs(x = "Groups", y = "% of Max Score")
 p <- p + stat_summary(fun.y=mean, geom="point", shape=4, size=4) + 
-  geom_jitter(shape=23, position=position_jitter(0.1))
+  geom_jitter(shape=23, position=position_jitter(0.1)) +
+  theme(legend.position = "none") 
 p
+ggsave("totalscores.tiff", dpi=300)
 
 shapiro.test(userdata$score)
 res.aov <- aov(userdata$score~userdata$group)
@@ -276,6 +278,7 @@ p <- p + labs(x = "Groups", y = "Eye Fixation Count")
 p <- p + stat_summary(fun.y=mean, geom="point", shape=4, size=4) + 
   geom_jitter(shape=23, position=position_jitter(0.1))
 p
+ggsave("eyefixcnt.tiff", dpi=300)
 res.aov <- aov(userdata$totalfixcnt~userdata$group) 
 summary(res.aov)
 etaSquared(res.aov)
@@ -289,6 +292,7 @@ p <- p + labs(x = "Groups", y = "Eye Fixation Duration")
 p <- p + stat_summary(fun.y=mean, geom="point", shape=4, size=4) + 
   geom_jitter(shape=23, position=position_jitter(0.1))
 p
+#ggsave("eyefixdiff.tiff", dpi=300)
 res.aov <- aov(userdata$totalfixdur~userdata$group) 
 summary(res.aov)
 etaSquared(res.aov)
@@ -353,8 +357,95 @@ boxplot(userdata$totaleDurTask~userdata$group, ylab="Eye Fix. Dur. Task")
 
 boxplot(userdata$totaleAOIswitch~userdata$group, ylab="Eye Tot. AOI Switches")
 ```
+```{r}
+
+#boxplot(userdata$totaleCntText~userdata$group, ylab="Eye Fix. Cnt. Text")
+p <- ggplot(userdata, aes(x=group, y=totaleCntText, fill = group)) + 
+  geom_boxplot()
+p <- p + labs(x = "Groups", y = "Eye Fix. Cnt. Text")
+p <- p + stat_summary(fun=mean, geom="point", shape=4, size=4) + 
+  geom_jitter(shape=23, position=position_jitter(0.1))
+p1 <- p + ylim(0, 2000)+ theme(legend.position = "none") 
+
+#ggsave("EyeFixCntText.tiff", dpi=300)
+
+#boxplot(userdata$totaleCntModel~userdata$group, ylab="Eye Fix. Cnt. Model")
+p <- ggplot(userdata, aes(x=group, y=totaleCntModel, fill = group)) + 
+  geom_boxplot()
+p <- p + labs(x = "Groups", y = "Eye Fix. Cnt. Model")
+p <- p + stat_summary(fun=mean, geom="point", shape=4, size=4) + 
+  geom_jitter(shape=23, position=position_jitter(0.1))
+p2 <- p + ylim(0, 2000)+ theme(legend.position = "none") 
+#ggsave("EyeFixCntModel.tiff", dpi=300)
+
+
+#boxplot(userdata$totaleDurText~userdata$group, ylab="Eye Fix. Dur. Text")
+p <- ggplot(userdata, aes(x=group, y=totaleDurText, fill = group)) + 
+  geom_boxplot()
+p <- p + labs(x = "Groups", y = "Eye Fix. Dur. Text")
+p <- p + stat_summary(fun=mean, geom="point", shape=4, size=4) + 
+  geom_jitter(shape=23, position=position_jitter(0.1))
+p3 <- p + ylim(0.5, 1) + theme(legend.position = "none") 
+#ggsave("EyeFixDurText.tiff", dpi=300)
+
+
+#boxplot(userdata$totaleDurModel~userdata$group, ylab="Eye Fix. Dur. Model")
+p <- ggplot(userdata, aes(x=group, y=totaleDurModel, fill = group)) + 
+  geom_boxplot()
+p <- p + labs(x = "Groups", y = "Eye Fix. Dur. Model")
+p <- p + stat_summary(fun=mean, geom="point", shape=4, size=4) + 
+  geom_jitter(shape=23, position=position_jitter(0.1))
+p4 <- p + ylim(0.5, 1)+ theme(legend.position = "none") 
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+ggsave("Eye.tiff", plot= grid.arrange(p1, p2, p3, p4, nrow = 2), dpi=300)
+
+#boxplot(userdata$mousecnttext~userdata$group, ylab="Mouse Fix. Cnt. Text")
+p <- ggplot(userdata, aes(x=group, y=mousecnttext, fill = group)) + 
+  geom_boxplot()
+p <- p + labs(x = "Groups", y = "Mouse Fix. Cnt. Text")
+p <- p + stat_summary(fun=mean, geom="point", shape=4, size=4) + 
+  geom_jitter(shape=23, position=position_jitter(0.1))
+p5 <- p + ylim(0, 2000)+ theme(legend.position = "none") 
+
+#ggsave("MouseFixCntText.tiff", dpi=300)
+
+
+#boxplot(userdata$mousecntmodel~userdata$group, ylab="Mouse Fix. Cnt. Model")
+p <- ggplot(userdata, aes(x=group, y=mousecntmodel, fill = group)) + 
+  geom_boxplot()
+p <- p + labs(x = "Groups", y = "Mouse Fix. Cnt. Model")
+p <- p + stat_summary(fun=mean, geom="point", shape=4, size=4) + 
+  geom_jitter(shape=23, position=position_jitter(0.1))
+p6 <- p + ylim(0, 2000)+ theme(legend.position = "none") 
+
+#ggsave("MouseFixCntModel.tiff", dpi=300)
+
+#boxplot(userdata$mfixdurtext~userdata$group, ylab="Mouse Fix. Dur. Text")
+p <- ggplot(userdata, aes(x=group, y=mfixdurtext, fill = group)) + 
+  geom_boxplot()
+p <- p + labs(x = "Groups", y = "Mouse Fix. Dur. Text")
+p <- p + stat_summary(fun=mean, geom="point", shape=4, size=4) + 
+  geom_jitter(shape=23, position=position_jitter(0.1))
+p7 <- p + ylim(0.25, 0.6)+ theme(legend.position = "none") 
+
+#ggsave("MouseFixDurText.tiff", dpi=300)
+
+#boxplot(userdata$mfixdurmodel~userdata$group, ylab="Mouse Fix. Dur. Model")
+p <- ggplot(userdata, aes(x=group, y=mfixdurmodel, fill = group)) + 
+  geom_boxplot()
+p <- p + labs(x = "Groups", y = "Mouse Fix. Dur. Model")
+p <- p + stat_summary(fun=mean, geom="point", shape=4, size=4) + 
+  geom_jitter(shape=23, position=position_jitter(0.1))
+p8 <- p + ylim(0.25, 0.6) + theme(legend.position = "none") 
+
+#ggsave("MouseFixDurModel.tiff", dpi=300)
+grid.arrange(p5, p6, p7, p8, nrow = 2)
+ggsave("Mouse.tiff", plot= grid.arrange(p5, p6, p7, p8, nrow = 2), dpi=300)
+```
+
 # Mouse Behavior Across Groups
 ```{r}
+
 par(mfrow=c(2,4))
 boxplot(userdata$mousecnthierachy~userdata$group, ylab="Mouse Fix. Cnt. Hier.")
 boxplot(userdata$mousecnttext~userdata$group, ylab="Mouse Fix. Cnt. Text")
